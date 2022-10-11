@@ -1,16 +1,23 @@
 import webdev
 import os
-import time
 
 # creates a queue of all the files that need to be crawled
 
 
 def createQueue(seed):
     webData = webdev.read_url(seed)
-
+    path = os.path.join(
+        "data", seed[seed.rfind("/") + 1:].strip(".html") + ".txt")
+    fileContents = ""
     i = 0
     while i < len(webData):
         # finds every anchor tag and checks the link that those link direct to
+        if webData[i:i+3] == "<p>":
+            # GETS DATA WITH P TAG
+            fileContents += webData[i+3:webData.find("</p>", i)].strip() + "\n"
+            # makes so next iteration skips the found data
+            i = webData.find("</p>", i) + 4
+            continue
         if webData[i:i+9] == "<a href=\"":
             # subpathName = webData[i+11:webData.find("\">", i)].strip(".html")
             fullpath = seed[:seed.rfind("/") + 1] + \
@@ -25,11 +32,24 @@ def createQueue(seed):
             #     queue[subpathName] += 1
 
         i += 1
+    fileWrite = open(path, "w")
+    fileWrite.write(fileContents)
+    fileWrite.close()
+
+
+def removeSavedData():
+    if os.path.exists("data"):
+        dataFiles = os.listdir("data")
+        for file in dataFiles:
+            os.remove(os.path.join("data", file))
+        os.rmdir("data")
 
 
 def crawl(seed):
     global queue
     queue = {}
+    removeSavedData()
+    os.makedirs("data")
     # seed[seed.rfind("/") + 1:].strip(".html")
     queue[seed] = 0
     createQueue(seed)
@@ -50,7 +70,8 @@ def crawl(seed):
     print(queue)
 
 
-crawl("http://people.scs.carleton.ca/~davidmckenney/fruits/N-0.html")
+crawl("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-0.html")
+# removeSavedData()
 
 
 # CODE PORTIONS FOR LATER

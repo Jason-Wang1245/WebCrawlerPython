@@ -1,0 +1,16 @@
+apple
+fig
+lime
+peach
+orange
+blueberry
+apricot
+pear
+banana
+banana
+pear
+kiwi
+fig
+pear
+fig
+orange
