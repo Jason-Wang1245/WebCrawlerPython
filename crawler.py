@@ -7,16 +7,19 @@ import time
 
 def createQueue(seed):
     webData = webdev.read_url(seed)
+
     i = 0
     while i < len(webData):
         # finds every anchor tag and checks the link that those link direct to
         if webData[i:i+9] == "<a href=\"":
-            subpathName = webData[i+11:webData.find("\">", i)].strip(".html")
+            # subpathName = webData[i+11:webData.find("\">", i)].strip(".html")
             fullpath = seed[:seed.rfind("/") + 1] + \
                 webData[i+11:webData.find("\">", i)]
-            if not subpathName in queue:
-                queue[subpathName] = fullpath
+            if not fullpath in queue:
+                queue[fullpath] = 1
                 createQueue(fullpath)
+            else:
+                queue[fullpath] += 1
             # implementation for counting references
             # else:
             #     queue[subpathName] += 1
@@ -27,7 +30,8 @@ def createQueue(seed):
 def crawl(seed):
     global queue
     queue = {}
-    queue[seed[seed.rfind("/") + 1:].strip(".html")] = seed
+    # seed[seed.rfind("/") + 1:].strip(".html")
+    queue[seed] = 0
     createQueue(seed)
     # while i < len(data):
     #     if data[i] == "<":
@@ -46,7 +50,7 @@ def crawl(seed):
     print(queue)
 
 
-crawl("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-0.html")
+crawl("http://people.scs.carleton.ca/~davidmckenney/fruits/N-0.html")
 
 
 # CODE PORTIONS FOR LATER
