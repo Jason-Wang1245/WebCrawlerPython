@@ -25,4 +25,7 @@ def get_outgoing_links(URL):
                 links.append("https://" + file.replace("|", "/")[:len(file) - 5] + ".html")
     return links
 
-print(get_outgoing_links("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-0.html"))
+# def get_page_rank(URL):
+
+
+print(get_incoming_links("http://people.scs.carleton.ca/~davidmckenney/fruits/N-0.html"))

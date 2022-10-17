@@ -10,18 +10,22 @@ def readPage(seed):
     i = 0
     while i < len(webData):
         # finds every paragraph tag and checks the link that those link direct to
-        if webData[i:i+3] == "<p>":
+        if webData[i:i+2] == "<p":
             # GETS DATA WITH P TAG
             if "fileData" in fileContents:
-                fileContents["fileData"].append(webData[i+3:webData.find("</p>", i)].strip().split())
+                fileContents["fileData"].append(webData[webData.find(">", i) + 1:webData.find("</p>", i)].strip().split())
             else:
-                fileContents["fileData"] = webData[i+3:webData.find("</p>", i)].strip().split()
+                fileContents["fileData"] = webData[webData.find(">", i) + 1:webData.find("</p>", i)].strip().split()
             # makes next iteration skips the found data
             i = webData.find("</p>", i) + 4
             continue
         if webData[i:i+9] == "<a href=\"":
             # subpathName = webData[i+11:webData.find("\">", i)].strip(".html")
-            fullpath = seed[:seed.rfind("/") + 1] + webData[i+11:webData.find("\">", i)]
+            href = webData[i+9:webData.find("\">", i)]
+            if href.startswith("./"):
+                fullpath = seed[:seed.rfind("/") + 1] + webData[i+11:webData.find("\">", i)]
+            else:
+                fullpath = webData[i+11:webData.find("\">", i)]
             if "referenceLinks" in fileContents:
                 fileContents["referenceLinks"].append(fullpath)
             else:
@@ -49,7 +53,7 @@ def removeSavedData():
             os.remove(os.path.join("data", file))
         os.rmdir("data")
 
-
+# crawls all webpages within in the given seed page and store data in json files
 def crawl(seed):
     if webdev.read_url(seed) == "":
         return None
