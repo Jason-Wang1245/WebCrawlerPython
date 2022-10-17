@@ -19,17 +19,19 @@ def readPage(seed):
             # makes next iteration skips the found data
             i = webData.find("</p>", i) + 4
             continue
-        if webData[i:i+9] == "<a href=\"":
-            # subpathName = webData[i+11:webData.find("\">", i)].strip(".html")
-            href = webData[i+9:webData.find("\">", i)]
+        if webData[i:i+2] == "<a":
+            href = webData[webData.find("href=\"", i) + 6:webData.find("\">", i)]
+            # checks if the anchor tag is a relative link
             if href.startswith("./"):
-                fullpath = seed[:seed.rfind("/") + 1] + webData[i+11:webData.find("\">", i)]
+                fullpath = seed[:seed.rfind("/") + 1] + href[2:]
             else:
-                fullpath = webData[i+11:webData.find("\">", i)]
+                fullpath = href
+            # add reference link to fileContents
             if "referenceLinks" in fileContents:
                 fileContents["referenceLinks"].append(fullpath)
             else:
                 fileContents["referenceLinks"] = [fullpath]
+            # ensures that recursion only visits each unique website once
             if not fullpath in queue:
                 queue[fullpath] = 1
                 # makes next iteration skip the rest of the anchor tag that has already been found
@@ -37,13 +39,13 @@ def readPage(seed):
                 readPage(fullpath)
             else:
                 queue[fullpath] += 1
-            # implementation for counting references
-            # else:
-            #     queue[subpathName] += 1
 
         i += 1
-    with open(fileName, "w") as fileWrite:
-        json.dump(fileContents, fileWrite)
+    fileWrite = open(fileName, "w")
+    json.dump(fileContents, fileWrite)
+    # with open(fileName, "w") as fileWrite:
+    #     json.dump(fileContents, fileWrite)
+    fileWrite.close()
 
 # clears all local data files
 def removeSavedData():
