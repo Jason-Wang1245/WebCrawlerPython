@@ -5,7 +5,7 @@ import json
 # adds the number of times each page is referenced to queue (additional queue counts the number of webpages) and saves data within paragraph tags to files
 def readPage(seed):
     webData = webdev.read_url(seed)
-    fileName = os.path.join("data", seed[7:].replace("/", "|").rstrip(".html") + ".json")
+    fileName = os.path.join("data", seed[7:].replace("/", ";").rstrip(".html") + ".json")
     fileContents = {}
     i = 0
     while i < len(webData):
