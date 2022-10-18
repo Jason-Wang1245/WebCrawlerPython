@@ -5,17 +5,27 @@ import json
 # adds the number of times each page is referenced to queue (additional queue counts the number of webpages) and saves data within paragraph tags to files
 def readPage(seed):
     webData = webdev.read_url(seed)
-    fileName = os.path.join("data", seed[7:].replace("/", ";").rstrip(".html") + ".json")
+    fileName = os.path.join("data", seed[7:].replace("/", "}") + ".json")
     fileContents = {}
     i = 0
     while i < len(webData):
         # finds every paragraph tag and checks the link that those link direct to
         if webData[i:i+2] == "<p":
-            # GETS DATA WITH P TAG
-            if "fileData" in fileContents:
-                fileContents["fileData"].append(webData[webData.find(">", i) + 1:webData.find("</p>", i)].strip().split())
+            if not "data" in fileContents:
+                fileContents["data"] = {}
+            words = webData[webData.find(">", i) + 1:webData.find("</p>", i)].strip().split()
+            # adds all words within the paragraph tag to fileContents
+            for word in words:
+                word = word.lower()
+                if word in fileContents["data"]:
+                    fileContents["data"][word] += 1
+                else:
+                    fileContents["data"][word] = 1
+            # adds the total of words just added to fileContents
+            if "numWords" in fileContents:
+                fileContents["numWords"] += len(words)
             else:
-                fileContents["fileData"] = webData[webData.find(">", i) + 1:webData.find("</p>", i)].strip().split()
+                fileContents["numWords"] = len(words)
             # makes next iteration skips the found data
             i = webData.find("</p>", i) + 4
             continue
@@ -43,8 +53,6 @@ def readPage(seed):
         i += 1
     fileWrite = open(fileName, "w")
     json.dump(fileContents, fileWrite)
-    # with open(fileName, "w") as fileWrite:
-    #     json.dump(fileContents, fileWrite)
     fileWrite.close()
 
 # clears all local data files
