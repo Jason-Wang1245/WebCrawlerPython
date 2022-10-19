@@ -4,7 +4,7 @@ import webdev
 import math
 
 def get_incoming_links(URL):
-    filePath = os.path.join("data", URL[7:].replace("/", "}") + ".json")
+    filePath = os.path.join("pageData", URL[7:].replace("/", "}") + ".json")
     if not os.path.isfile(filePath):
         return None
 
@@ -14,16 +14,16 @@ def get_incoming_links(URL):
     return fileContents["referenceLinks"]
 
 def get_outgoing_links(URL):
-    if not os.path.isfile(os.path.join("data", URL[7:].replace("/", "}") + ".json")):
+    if not os.path.isfile(os.path.join("pageData", URL[7:].replace("/", "}") + ".json")):
         return None
     
-    fileRead = open(os.path.join("data", "outgoingLinks.json"), "r")
+    fileRead = open(os.path.join("otherData", "outgoingLinks.json"), "r")
     outgoingLinks = json.load(fileRead)
     fileRead.close()
     return outgoingLinks[URL]
 
 def get_tf(URL, word):
-    filePath = os.path.join("data", URL[7:].replace("/", "}") + ".json")
+    filePath = os.path.join("pageData", URL[7:].replace("/", "}") + ".json")
     if not os.path.isfile(filePath):
         return 0
     
@@ -36,7 +36,7 @@ def get_tf(URL, word):
     return tfValues[word.lower()]
 
 def get_idf(word):
-    fileRead = open(os.path.join("data", "idf.json"), "r")
+    fileRead = open(os.path.join("pageData", "idf.json"), "r")
     idfValues = json.load(fileRead)
     fileRead.close()
     if not word.lower() in idfValues:
