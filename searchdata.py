@@ -16,18 +16,11 @@ def get_incoming_links(URL):
 def get_outgoing_links(URL):
     if not os.path.isfile(os.path.join("data", URL[7:].replace("/", "}") + ".json")):
         return None
-    links = []
-    files = os.listdir("data")
-    for file in files:
-        filePath = os.path.join("data", file)
-        with open(filePath, "r") as fileRead:
-            fileContents = json.load(fileRead)
-        for link in fileContents["referenceLinks"]:
-            if link == URL:
-                links.append("https://" + file.replace("}", "/")[:len(file) - 5] + ".html")
-    return links
-
-# def get_page_rank(URL):
+    
+    fileRead = open(os.path.join("data", "outgoingLinks.json"), "r")
+    outgoingLinks = json.load(fileRead)
+    fileRead.close()
+    return outgoingLinks[URL]
 
 def get_tf(URL, word):
     filePath = os.path.join("data", URL[7:].replace("/", "}") + ".json")
@@ -35,39 +28,26 @@ def get_tf(URL, word):
         return 0
     
     fileRead = open(filePath, "r")
-    fileData = json.load(fileRead)
+    tfValues = json.load(fileRead)["tf"]
     fileRead.close()
-    if not word.lower() in fileData["data"]:
+    if not word.lower() in tfValues:
         return 0
 
-    return fileData["data"][word.lower()] / fileData["numWords"]
+    return tfValues[word.lower()]
 
 def get_idf(word):
-    numWordAppearence = 0
-    files = os.listdir("data")
-    for file in files:
-        filePath = os.path.join("data", file)
-        fileRead = open(filePath, "r")
-        fileData = json.load(fileRead)["data"]
-        fileRead.close()
-        if word.lower() in fileData:
-            numWordAppearence += 1
-    return math.log(len(files) / (1 + numWordAppearence), 2)
+    fileRead = open(os.path.join("data", "idf.json"), "r")
+    idfValues = json.load(fileRead)
+    fileRead.close()
+    if not word.lower() in idfValues:
+        return 0
+
+    return idfValues[word.lower()]
 
 def get_tf_idf(URL, word):
     return math.log(1 + get_tf(URL, word), 2) * get_idf(word)
 
-print(get_tf_idf("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-0.html", "apple"))
-print(get_tf_idf("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-1.html", "apple"))
-print(get_tf_idf("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-2.html", "apple"))
-print(get_tf_idf("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-3.html", "apple"))
-
-print(get_tf_idf("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-0.html", "banana"))
-print(get_tf_idf("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-1.html", "Banana"))
-print(get_tf_idf("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-2.html", "BANANA"))
-print(get_tf_idf("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-3.html", "banana"))
-
-print(get_tf_idf("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-0.html", "peach"))
-print(get_tf_idf("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-1.html", "peach"))
-print(get_tf_idf("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-2.html", "peach"))
-print(get_tf_idf("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-3.html", "peach"))
+def get_page_rank(URL):
+    filePath = os.path.join("data", URL[7:].replace("/", "}") + ".json")
+    if not os.path.isfile(filePath):
+        return -1
