@@ -2,7 +2,6 @@ import webdev
 import os
 import json
 import math
-import time
 
 # reads all text and link reference data from the given webpage
 def readPage(seed):
@@ -18,7 +17,6 @@ def readPage(seed):
             # adds all words within the paragraph tag to fileContents
             for word in words:
                 word = word.lower()
-
                 if word in fileContents["data"]:
                     fileContents["data"][word] += 1
                 else:
@@ -149,11 +147,11 @@ def savePageRank():
         adjcencyMatrix[checkedPages[name]] = row
 
     # multiples entire matrix by 1 - alpha(0.1)
-    adjacencyMatrix = multScalar(adjcencyMatrix, 1-0.1)
+    adjacencyMatrix = multScalar(adjcencyMatrix, 1 - 0.1)
     # adds alpha(0.1)/N
     for i in range(len(checkedPages)):
         for j in range(len(checkedPages)):
-            adjacencyMatrix[i][j] += 0.1/len(checkedPages)
+            adjacencyMatrix[i][j] += 0.1 / len(checkedPages)
 
     # keeps getting multiplying the two matrices until their euclidean distance is less than or equal to 0.0001
     vectorB = vectorA
@@ -204,10 +202,8 @@ def crawl(seed):
     fileWrite = open(os.path.join("otherData", "idf.json"), "w")
     json.dump(idf, fileWrite)
     fileWrite.close()
-    print(savePageRank())
+    savePageRank()
     return(len(checkedPages))
 
-# start = time.time()
 # print(crawl("http://people.scs.carleton.ca/~davidmckenney/fruits/N-0.html"))
-# print(time.time() - start)
-print(crawl("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-0.html"))
+# crawl("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-0.html")
