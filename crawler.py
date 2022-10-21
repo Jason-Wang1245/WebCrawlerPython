@@ -10,6 +10,7 @@ def readPage(seed):
     fileContents = {"tf": {}}
     i = 0
     while i < len(webData):
+        # gets the title of the page
         if webData[i:i+7] == "<title>":
             fileContents["title"] = webData[i+7:webData.find("</title>")]
             i = webData.find("</title>") + 8
@@ -137,14 +138,10 @@ def saveTfIdf():
     for file in pageFiles:
         fileRead = open(os.path.join("pageData", file), "r")
         fileData = json.load(fileRead)
-        fileData["tf-idf"] = {}
-        pageVector = [0] * len(idf)
-        for word in fileData["tf"]:
-            tfidf = math.log(1 + fileData["tf"][word], 2) * idf[word][1]
-            fileData["tf-idf"][word] = tfidf
-            pageVector[idf[word][0]] = tfidf
-        fileData["vector"] = pageVector
         fileRead.close()
+        fileData["tf-idf"] = {}
+        for word in fileData["tf"]:
+            fileData["tf-idf"][word] = math.log(1 + fileData["tf"][word], 2) * idf[word]
         fileWrite = open(os.path.join("pageData", file), "w")
         json.dump(fileData, fileWrite)
         fileWrite.close()
@@ -177,10 +174,8 @@ def crawl(seed):
     # calculate all idf values and create file for storing them in data directory
     global idf
     idf = {}
-    vectorIndex = 0
     for word in wordCounter:
-        idf[word] = [vectorIndex, math.log(len(checkedPages) / (1 + wordCounter[word]), 2)]
-        vectorIndex += 1
+        idf[word] = math.log(len(checkedPages) / (1 + wordCounter[word]), 2)
     fileWrite = open(os.path.join("otherData", "idf.json"), "w")
     json.dump(idf, fileWrite)
     fileWrite.close()

@@ -50,7 +50,7 @@ def get_tf_idf(URL, word):
         return 0
 
     fileRead = open(filePath, "r")
-    tfIdf = json.load(fileRead)["tf-idf"][1]
+    tfIdf = json.load(fileRead)["tf-idf"]
     if word.lower() in tfIdf:
         return tfIdf[word.lower()]
     else:
