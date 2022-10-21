@@ -91,8 +91,7 @@ def removeSavedData():
 
 def savePageRank():
     pageFiles = os.listdir("pageData")
-    vectorA = [[0] * len(checkedPages)]
-    vectorA[0][0] = 1
+    vectorA = [[1/len(checkedPages)] * len(checkedPages)]
     euclideanDistance = 1
     # let N represent the number of webpages
     # creates a matrix that has N indexes
