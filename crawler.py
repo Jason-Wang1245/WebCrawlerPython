@@ -2,6 +2,7 @@ import webdev
 import os
 import json
 import math
+import matmult
 
 # reads all text and link reference data from the given webpage
 def readPage(seed):
@@ -9,6 +10,9 @@ def readPage(seed):
     fileContents = {"tf": {}}
     i = 0
     while i < len(webData):
+        if webData[i:i+7] == "<title>":
+            fileContents["title"] = webData[i+7:webData.find("</title>")]
+            i = webData.find("</title>") + 8
         # finds every paragraph tag and checks the link that those link direct to
         if webData[i:i+2] == "<p":
             if not "data" in fileContents:
@@ -65,6 +69,8 @@ def readPage(seed):
         # calculates tf score for each word within the current seed (webpage)
         fileContents["tf"][word] = fileContents["data"][word] / fileContents["numWords"]
 
+    del fileContents["data"]
+
     fileWrite = open(os.path.join("pageData", seed[7:].replace("/", "}") + ".json"), "w")
     json.dump(fileContents, fileWrite)
     fileWrite.close()
@@ -81,50 +87,6 @@ def removeSavedData():
         for file in dataFiles:
             os.remove(os.path.join("otherData", file))
         os.rmdir("otherData")
-
-# multiples matrix with a scalar
-def multScalar(matrix, scale):
-    # multiplies each individual element within matrix by scale
-    for i in range(len(matrix)):
-        for j in range(len(matrix[i])):
-            matrix[i][j] *= scale
-    return matrix
-
-# multiples two matrices
-def multMatrix(a, b):
-    # returns None if the two matrices are incompatible for multiplication
-    if len(a[0]) != len(b):
-        return None
-    # transposes matrix b (swaps rows with columns)
-    bChanged = []
-    for i in range(len(b[0])):
-        bChanged.append([])
-        for k in range(len(b)):
-            bChanged[i].append(b[k][i])
-
-    matrix = []
-    for i in range(len(a)):
-        # adds a new row to the product matrix
-        matrix.append([])
-        # multiples the first row elements of matrix a with the corresponding element in each row of matrix bChanged
-        for j in range(len(bChanged)):
-            # reset sum for each row in bChanged
-            sum = 0
-            for k in range(len(bChanged[0])):
-                sum += a[i][k] * bChanged[j][k]
-            # adds the product sum of each row in matrix bChanged as a new element in the product matrix (in row i)
-            matrix[i].append(sum)
-
-    return matrix
-
-# gets euclidian distance between two vectors
-def euclideanDist(a, b):
-    sum = 0
-    # gets the difference of each element in matrix a and b and square it, then add it to sum
-    for i in range(len(a[0])):
-        sum += (a[0][i] - b[0][i]) ** 2
-    # returns the square root of sum (euclidean distance)
-    return sum ** (1 / 2)
 
 def savePageRank():
     pageFiles = os.listdir("pageData")
@@ -147,7 +109,7 @@ def savePageRank():
         adjcencyMatrix[checkedPages[name]] = row
 
     # multiples entire matrix by 1 - alpha(0.1)
-    adjacencyMatrix = multScalar(adjcencyMatrix, 1 - 0.1)
+    adjacencyMatrix = matmult.mult_scalar(adjcencyMatrix, 1 - 0.1)
     # adds alpha(0.1)/N
     for i in range(len(checkedPages)):
         for j in range(len(checkedPages)):
@@ -157,8 +119,8 @@ def savePageRank():
     vectorB = vectorA
     while euclideanDistance > 0.0001:
         vectorA = vectorB
-        vectorB = multMatrix(vectorA, adjacencyMatrix)
-        euclideanDistance = euclideanDist(vectorA, vectorB)
+        vectorB = matmult.mult_matrix(vectorA, adjacencyMatrix)
+        euclideanDistance = matmult.euclidean_dist(vectorA, vectorB)
     
     # saves calculated page rank values to a json file
     pageRank = {}
@@ -169,6 +131,23 @@ def savePageRank():
     fileWrite = open(os.path.join("otherData", "pageRank.json"), "w")
     json.dump(pageRank, fileWrite)
     fileWrite.close()
+
+def saveTfIdf():
+    pageFiles = os.listdir("pageData")
+    for file in pageFiles:
+        fileRead = open(os.path.join("pageData", file), "r")
+        fileData = json.load(fileRead)
+        fileData["tf-idf"] = {}
+        pageVector = [0] * len(idf)
+        for word in fileData["tf"]:
+            tfidf = math.log(1 + fileData["tf"][word], 2) * idf[word][1]
+            fileData["tf-idf"][word] = tfidf
+            pageVector[idf[word][0]] = tfidf
+        fileData["vector"] = pageVector
+        fileRead.close()
+        fileWrite = open(os.path.join("pageData", file), "w")
+        json.dump(fileData, fileWrite)
+        fileWrite.close()
     
 
 # crawls all webpages within in the given seed page and store data in json files
@@ -196,14 +175,20 @@ def crawl(seed):
     json.dump(outgoingLinks, fileWrite)
     fileWrite.close()
     # calculate all idf values and create file for storing them in data directory
+    global idf
     idf = {}
+    vectorIndex = 0
     for word in wordCounter:
-        idf[word] = math.log(len(checkedPages) / (1 + wordCounter[word]), 2)
+        idf[word] = [vectorIndex, math.log(len(checkedPages) / (1 + wordCounter[word]), 2)]
+        vectorIndex += 1
     fileWrite = open(os.path.join("otherData", "idf.json"), "w")
     json.dump(idf, fileWrite)
     fileWrite.close()
     savePageRank()
+    saveTfIdf()
     return(len(checkedPages))
 
-# print(crawl("http://people.scs.carleton.ca/~davidmckenney/fruits/N-0.html"))
-# crawl("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-0.html")
+# start = time.time()
+# crawl("http://people.scs.carleton.ca/~davidmckenney/fruits/N-0.html")
+# print(time.time() - start)
+crawl("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-0.html")

@@ -36,7 +36,7 @@ def get_tf(URL, word):
     return tfValues[word.lower()]
 
 def get_idf(word):
-    fileRead = open(os.path.join("pageData", "idf.json"), "r")
+    fileRead = open(os.path.join("otherData", "idf.json"), "r")
     idfValues = json.load(fileRead)
     fileRead.close()
     if not word.lower() in idfValues:
@@ -45,9 +45,23 @@ def get_idf(word):
     return idfValues[word.lower()]
 
 def get_tf_idf(URL, word):
-    return math.log(1 + get_tf(URL, word), 2) * get_idf(word)
+    filePath = os.path.join("pageData", URL[7:].replace("/", "}") + ".json")
+    if not os.path.isfile(filePath):
+        return 0
+
+    fileRead = open(filePath, "r")
+    tfIdf = json.load(fileRead)["tf-idf"][1]
+    if word.lower() in tfIdf:
+        return tfIdf[word.lower()]
+    else:
+        return 0
 
 def get_page_rank(URL):
-    filePath = os.path.join("data", URL[7:].replace("/", "}") + ".json")
+    filePath = os.path.join("pageData", URL[7:].replace("/", "}") + ".json")
     if not os.path.isfile(filePath):
         return -1
+    
+    fileRead = open(os.path.join("otherData", "pageRank.json"))
+    pageRank = json.load(fileRead)[URL]
+    fileRead.close()
+    return pageRank
