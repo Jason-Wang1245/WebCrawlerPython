@@ -182,8 +182,3 @@ def crawl(seed):
     savePageRank()
     saveTfIdf()
     return(len(checkedPages))
-
-# start = time.time()
-# crawl("http://people.scs.carleton.ca/~davidmckenney/fruits/N-0.html")
-# print(time.time() - start)
-crawl("http://people.scs.carleton.ca/~davidmckenney/tinyfruits/N-0.html")

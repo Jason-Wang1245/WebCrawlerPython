@@ -65,3 +65,13 @@ def get_page_rank(URL):
     pageRank = json.load(fileRead)[URL]
     fileRead.close()
     return pageRank
+
+def get_title(URL):
+    filePath = os.path.join("pageData", URL[7:].replace("/", "}") + ".json")
+    if not os.path.isfile(filePath):
+        return None
+    
+    fileRead = open(filePath, "r")
+    pageTitle = json.load(fileRead)["title"]
+    fileRead.close()
+    return pageTitle
