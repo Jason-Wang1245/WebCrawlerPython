@@ -2,7 +2,7 @@ import math
 import os
 import searchdata
         
-# altered selection sort to sort top 10 (or all if list is less than 10) consine similarity scores
+# altered selection sort to sort top 10 (or all of the list if length of list is less than 10) based on consine similarity scores
 def selectionSort(list):
     start = 0
     if len(list) < 10:
@@ -15,7 +15,6 @@ def selectionSort(list):
                 list[i], list[start] = list[start], list[i]
         start += 1
     return list[0:listMax]
-
 
 def search(phrase, boost):
     # final list to be returned
@@ -31,19 +30,20 @@ def search(phrase, boost):
     for word in phraseSplit:
         if not word in words:
             words[word] = phraseSplit.count(word)
-    # generates the order of the vector to be made with each page file, queryDenominator, and the queryVector to be used to calculate the numerator of the cosine similarity equation
+    # generates the order of the vector to be used when making each page vector, queryDenominator, and the queryVector to be used to calculate the numerator of the cosine similarity equation
     for word in words:
         idf = searchdata.get_idf(word)
+        # this skips words in the query that do not exist in crawled pages
         if idf != 0:
             queryTfidf = math.log(1 + (words[word] / len(phraseSplit)), 2) * idf
             queryVector.append(queryTfidf)
             vectorOrder.append(word)
             queryDenominator += queryTfidf ** 2
     queryDenominator = queryDenominator ** (1 / 2)
-    # gets every webpage data file in order to generate cosine similarities to the query vector
-    pageFiles = os.listdir("pageData")
-    for file in pageFiles:
-        url = "http://" + file.replace("}", "/").rstrip(".json")
+    # gets every webpage data folder in order to generate cosine similarities to the query vector
+    pageFolders = os.listdir("pageData")
+    for folder in pageFolders:
+        url = "http://" + folder.replace("}", "/").rstrip(".json")
         pageDenominator = 0
         numerator = 0
         # generates rest of the values needed to calculate cosine similarity
