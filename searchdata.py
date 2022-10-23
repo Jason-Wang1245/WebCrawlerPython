@@ -9,18 +9,19 @@ def get_incoming_links(URL):
         return None
 
     fileRead = open(filePath, "r")
-    fileContents = json.load(fileRead)
+    referenceLinks = json.load(fileRead)["referenceLinks"]
     fileRead.close()
-    return fileContents["referenceLinks"]
+    return referenceLinks
 
 def get_outgoing_links(URL):
-    if not os.path.isfile(os.path.join("pageData", URL[7:].replace("/", "}") + ".json")):
+    filePath = os.path.join("pageData", URL[7:].replace("/", "}") + ".json")
+    if not os.path.isfile(filePath):
         return None
     
-    fileRead = open(os.path.join("otherData", "outgoingLinks.json"), "r")
-    outgoingLinks = json.load(fileRead)
+    fileRead = open(filePath, "r")
+    outgoingLinks = json.load(fileRead)["outgoingLinks"]
     fileRead.close()
-    return outgoingLinks[URL]
+    return outgoingLinks
 
 def get_tf(URL, word):
     filePath = os.path.join("pageData", URL[7:].replace("/", "}") + ".json")
@@ -36,7 +37,7 @@ def get_tf(URL, word):
     return tfValues[word.lower()]
 
 def get_idf(word):
-    fileRead = open(os.path.join("otherData", "idf.json"), "r")
+    fileRead = open(os.path.join("idf", "idf.json"), "r")
     idfValues = json.load(fileRead)
     fileRead.close()
     if not word.lower() in idfValues:
@@ -61,11 +62,12 @@ def get_page_rank(URL):
     if not os.path.isfile(filePath):
         return -1
     
-    fileRead = open(os.path.join("otherData", "pageRank.json"))
-    pageRank = json.load(fileRead)[URL]
+    fileRead = open(filePath, "r")
+    pageRank = json.load(fileRead)["pageRank"]
     fileRead.close()
     return pageRank
 
+# gets the title of the given webpage (used in search.py)
 def get_title(URL):
     filePath = os.path.join("pageData", URL[7:].replace("/", "}") + ".json")
     if not os.path.isfile(filePath):

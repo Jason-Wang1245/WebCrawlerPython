@@ -2,27 +2,36 @@ import math
 import os
 import searchdata
         
+# altered selection sort to sort top 10 (or all if list is less than 10) consine similarity scores
 def selectionSort(list):
     start = 0
-    while start < len(list):
+    if len(list) < 10:
+        listMax = len(list)
+    else:
+        listMax = 10
+    while start < listMax:
         for i in range(start, len(list)):
             if list[i]["score"] > list[start]["score"]:
                 list[i], list[start] = list[start], list[i]
         start += 1
-    return list
+    return list[0:listMax]
 
 
 def search(phrase, boost):
+    # final list to be returned
     searchResults = []
-
+    # create lists needed for creating page and query vectors
     vectorOrder = []
     queryVector = []
+    # left portion of the denominator when calculating cosine similarity
     queryDenominator = 0
     phraseSplit = phrase.strip().lower().split()
     words = {}
+    # counts the occurence of each word and stores it in words
     for word in phraseSplit:
         if not word in words:
             words[word] = phraseSplit.count(word)
+    # generates the order of the vector to be made with each page file, queryDenominator, and the queryVector to be used to calculate the numerator of the cosine similarity equation
     for word in words:
         idf = searchdata.get_idf(word)
         if idf != 0:
@@ -37,11 +46,9 @@ def search(phrase, boost):
         url = "http://" + file.replace("}", "/").rstrip(".json")
         pageDenominator = 0
         numerator = 0
-        pageVector = []
-        # generates a vector space model for the current webpage data file
+        # generates rest of the values needed to calculate cosine similarity
         for i in range(len(vectorOrder)):
             pageTfIdf = searchdata.get_tf_idf(url, vectorOrder[i])
-            pageVector.append(pageTfIdf)
             numerator += pageTfIdf * queryVector[i]
             pageDenominator += pageTfIdf ** 2
         
@@ -51,15 +58,7 @@ def search(phrase, boost):
             cosineSimilaritiy = numerator / (queryDenominator * (pageDenominator ** (1 / 2)))
             if boost:
                 cosineSimilaritiy *= searchdata.get_page_rank(url)
+        
         searchResults.append({"url": url, "title": searchdata.get_title(url), "score": cosineSimilaritiy})
 
-    searchResults = selectionSort(searchResults)
-
-    if len(searchResults) > 10:
-        rankAmount = 10
-    else:
-        rankAmount = len(searchResults)
-
-    return searchResults[0:rankAmount]
-
-        
+    return selectionSort(searchResults)

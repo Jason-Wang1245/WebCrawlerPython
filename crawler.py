@@ -4,10 +4,10 @@ import json
 import math
 import matmult
 
-# reads all text and link reference data from the given webpage
+# reads all text and link reference data from the given seed
 def readPage(seed):
     webData = webdev.read_url(seed)
-    fileContents = {"tf": {}}
+    fileContents = {"tf": {}, "numWords": {}, "data": {}, "referenceLinks": {}}
     i = 0
     while i < len(webData):
         # gets the title of the page
@@ -27,10 +27,7 @@ def readPage(seed):
                 else:
                     fileContents["data"][word] = 1
             # adds the total of words just added to fileContents
-            if "numWords" in fileContents:
-                fileContents["numWords"] += len(words)
-            else:
-                fileContents["numWords"] = len(words)
+            fileContents["numWords"] += len(words)
             # makes next iteration skips the found data
             i = webData.find("</p>", i) + 4
             continue
@@ -47,10 +44,7 @@ def readPage(seed):
             else:
                 outgoingLinks[fullpath] = [seed]
             # add reference link to fileContents
-            if "referenceLinks" in fileContents:
-                fileContents["referenceLinks"].append(fullpath)
-            else:
-                fileContents["referenceLinks"] = [fullpath]
+            fileContents["referenceLinks"].append(fullpath)
             # ensures that recursion only visits each unique website once
             if not fullpath in checkedPages:
                 global index
@@ -61,6 +55,7 @@ def readPage(seed):
                 readPage(fullpath)
 
         i += 1
+    # adds tf values to the fileContents
     for word in fileContents["data"]:
         # add the number of times each word appears in each webpage
         if word in wordCounter:
@@ -69,32 +64,41 @@ def readPage(seed):
             wordCounter[word] = 1
         # calculates tf score for each word within the current seed (webpage)
         fileContents["tf"][word] = fileContents["data"][word] / fileContents["numWords"]
-
+    # removes data on all words within the current page as it is not needed
     del fileContents["data"]
 
     fileWrite = open(os.path.join("pageData", seed[7:].replace("/", "}") + ".json"), "w")
     json.dump(fileContents, fileWrite)
     fileWrite.close()
 
-# clears all local data files
+# clears all local cache files and folders
 def removeSavedData():
     if os.path.exists("pageData"):
         dataFiles = os.listdir("pageData")
         for file in dataFiles:
             os.remove(os.path.join("pageData", file))
         os.rmdir("pageData")
-    if os.path.exists("otherData"):
-        dataFiles = os.listdir("otherData")
+    if os.path.exists("idf"):
+        dataFiles = os.listdir("idf")
         for file in dataFiles:
-            os.remove(os.path.join("otherData", file))
-        os.rmdir("otherData")
+            os.remove(os.path.join("idf", file))
+        os.rmdir("idf")
 
-def savePageRank():
+# saves idf values within a json file
+def saveIdf():
+    for word in wordCounter:
+        idf[word] = math.log(len(checkedPages) / (1 + wordCounter[word]), 2)
+    fileWrite = open(os.path.join("idf", "idf.json"), "w")
+    json.dump(idf, fileWrite)
+    fileWrite.close()
+
+# calculates the page rank of each page and saves it to global variable pageRank
+def calculatePageRank():
     pageFiles = os.listdir("pageData")
     vectorA = [[1/len(checkedPages)] * len(checkedPages)]
     euclideanDistance = 1
     # let N represent the number of webpages
-    # creates a matrix that has N indexes
+    # creates a matrix that has N indices
     adjcencyMatrix = [0] * len(checkedPages)
     # adds 1 to each index where a page references another
     for file in pageFiles:
@@ -122,25 +126,25 @@ def savePageRank():
         vectorB = matmult.mult_matrix(vectorA, adjacencyMatrix)
         euclideanDistance = matmult.euclidean_dist(vectorA, vectorB)
     
-    # saves calculated page rank values to a json file
-    pageRank = {}
+    # saves calculated page rank values to a pageRank
     for file in pageFiles:
-        name = "http://" + file.replace("}", "/").strip(".json")
-        pageRank[name] = vectorB[0][checkedPages[name]]
+        pageRank[file] = vectorB[0][checkedPages["http://" + file.replace("}", "/").strip(".json")]]
 
-    fileWrite = open(os.path.join("otherData", "pageRank.json"), "w")
-    json.dump(pageRank, fileWrite)
-    fileWrite.close()
-
-def saveTfIdf():
+# writes all the additional values to each individual webpages json cache file
+def writeAdditionalData():
     pageFiles = os.listdir("pageData")
     for file in pageFiles:
+        # retrieves what is currently written in each page file
         fileRead = open(os.path.join("pageData", file), "r")
         fileData = json.load(fileRead)
         fileRead.close()
+        # calculate tf-idf for current page and add it to the current page json data
         fileData["tf-idf"] = {}
         for word in fileData["tf"]:
             fileData["tf-idf"][word] = math.log(1 + fileData["tf"][word], 2) * idf[word]
+        # adds page rank and outgoing links to the current page json data
+        fileData["pageRank"] = pageRank[file]
+        fileData["outgoingLinks"] = outgoingLinks["http://" + file.replace("}", "/").strip(".json")]
         fileWrite = open(os.path.join("pageData", file), "w")
         json.dump(fileData, fileWrite)
         fileWrite.close()
@@ -150,34 +154,32 @@ def saveTfIdf():
 def crawl(seed):
     if webdev.read_url(seed) == "":
         return None
-    # creates global dictionaries used for readPage
-    # used to give each webpage a unique index
+    # keeps track of all check webpapages and index for calculating page rank
     global checkedPages
     checkedPages = {seed: 0}
+    # stores all outgoing links
     global outgoingLinks
     outgoingLinks = {}
+    # stores the appearence of each word in all pages
     global wordCounter
     wordCounter = {}
+    # index used for checkedPages (required for calculating page rank)
     global index
     index = 0
+    # stores idf values
+    global idf
+    idf = {}
+    # stores page rank values
+    global pageRank
+    pageRank = {}
     # clears cache directories and makes new ones
     removeSavedData()
     os.makedirs("pageData")
-    os.makedirs("otherData")
+    os.makedirs("idf")
     # calls readPage to crawl webpages
     readPage(seed)
-    # create file for outgoing links in data directory
-    fileWrite = open(os.path.join("otherData", "outgoingLinks.json"), "w")
-    json.dump(outgoingLinks, fileWrite)
-    fileWrite.close()
-    # calculate all idf values and create file for storing them in data directory
-    global idf
-    idf = {}
-    for word in wordCounter:
-        idf[word] = math.log(len(checkedPages) / (1 + wordCounter[word]), 2)
-    fileWrite = open(os.path.join("otherData", "idf.json"), "w")
-    json.dump(idf, fileWrite)
-    fileWrite.close()
-    savePageRank()
-    saveTfIdf()
+    # saves additional values of data
+    saveIdf()
+    calculatePageRank()
+    writeAdditionalData()
     return(len(checkedPages))
